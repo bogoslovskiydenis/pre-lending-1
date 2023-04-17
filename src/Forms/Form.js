@@ -1,16 +1,34 @@
-import React, { useState} from 'react';
+import React, {useState} from 'react';
 import useDevice from "../hooks/useDevice"
-import validateForm from './validateForm';
 
-export  default function Form() {
-    const { isMobile } = useDevice()
+export default function Form() {
+    const {isMobile} = useDevice()
     const [sliderMoved, setSliderMoved] = useState(false);
     const [formSectionMoved, setFormSectionMoved] = useState(false);
     const [email, setEmail] = useState('');
+    const [isValid, setIsValid] = useState(false);
+    const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    const [phone, setPhone] = useState()
+    const [phone, setPhone] = useState(0)
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [isValidPhoneNumber, setIsValidPhoneNumber] = useState(false);
+
+
+    const validateForm = () => {
+        let isValid = true;
+        if (!email) {
+            setEmailError('Email is required');
+            isValid = false;
+        } else if (!/\S+@\S+\.\S+/.test(email)) {
+            setEmailError('Email is invalid');
+            isValid = false;
+        } else {
+            setEmailError('');
+        }
+        return isValid;
+    };
 
     const handleSubmit = (e) => {
         fetch("/", {
@@ -31,6 +49,12 @@ export  default function Form() {
             setError(resultError);
             return;
         }
+        if (validateForm()) {
+            console.log(`Submitting email: ${email}`);
+            // Send email data to server or perform other actions
+        }
+
+        setPhone(0)
         setEmail('');
         setPassword('');
         setError(null);
@@ -46,23 +70,28 @@ export  default function Form() {
         setSliderMoved(false);
         setFormSectionMoved(false);
     }
-    const formData = [
-        // {label: 'Name', value: name, onChange: (e) => setName(e.target.value), type: 'text'},
-        {label: 'Email', value: email, onChange: (e) => setEmail(e.target.value), type: 'email'},
-        {
-            label: 'Password',
-            value: password,
-            onChange: (e) => setPassword(e.target.value),
-            type: 'password',
-        },
-        // {
-        //     label: 'Confirm Password',
-        //     value: confirmPass,
-        //     onChange: (e) => setConfirmPass(e.target.value),
-        //     type: 'password',
-        // },
-    ];
 
+    const handlePhoneNumberChange = (event) => {
+        const value = event.target.value;
+        // remove non-digit characters from input
+        const cleanedValue = value.replace(/\D/g, '');
+        setPhoneNumber(cleanedValue);
+        // check if phone number is valid
+        setIsValidPhoneNumber(/^\d{10}$/.test(cleanedValue));
+    };
+
+    function handleInputChange(event) {
+        const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
+        const inputEmail = event.target.value;
+
+        setEmail(inputEmail);
+
+        if (!emailRegex.test(inputEmail)) {
+            setIsValid(false);
+        } else {
+            setIsValid(true);
+        }
+    }
 
     return (
         <div className="container">
@@ -74,20 +103,27 @@ export  default function Form() {
             <div className={`form-section ${formSectionMoved ? `form-section-move` : ``}`}>
                 <div className="phone-box">
                     <input type="text"
+                           value={phoneNumber}
+                           onChange={handlePhoneNumberChange}
                            className="name ele"
-                           placeholder="Enter your name"></input>
-
-                    <button className="clkbtn">Зарегистрироваться</button>
+                           placeholder="Enter your phone"
+                           required
+                    />
+                    <button className="clkbtn" disabled={!isValidPhoneNumber}>Зарегистрироваться</button>
                 </div>
                 <div className="signup-box">
                     <input type="email"
+                           value={email}
                            className="email ele"
-                           placeholder="youremail@email.com"/>
+                           placeholder="youremail@email.com"
+                           onChange={handleInputChange}/>
                     <input type="password"
                            className="password ele"
-                           placeholder="password"/>
+                           placeholder="password"
+                           />
+                    <button className="clkbtn"  disabled={!isValid}>Зарегистрироваться</button>
+                 {/*//   {!isValid && <p>Please enter a valid email address.</p>}*/}
 
-                    <button className="clkbtn">Зарегистрироваться</button>
                 </div>
             </div>
         </div>
