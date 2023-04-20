@@ -1,65 +1,64 @@
 import React, {useState} from 'react';
-import useDevice from "../hooks/useDevice"
+
 
 export default function Form() {
-    const {isMobile} = useDevice()
+
     const [sliderMoved, setSliderMoved] = useState(false);
     const [formSectionMoved, setFormSectionMoved] = useState(false);
     const [email, setEmail] = useState('');
     const [isValid, setIsValid] = useState(false);
     const [emailError, setEmailError] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
-    const [phone, setPhone] = useState(0)
     const [phoneNumber, setPhoneNumber] = useState('');
     const [isValidPhoneNumber, setIsValidPhoneNumber] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [success, setSuccess] = useState(null);
+    const [error, setError] = useState(null);
 
 
-    const validateForm = () => {
-        let isValid = true;
-        if (!email) {
-            setEmailError('Email is required');
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            setEmailError('Email is invalid');
-            isValid = false;
-        } else {
-            setEmailError('');
-        }
-        return isValid;
-    };
+    // const validateForm = () => {
+    //     let isValid = true;
+    //     if (!email) {
+    //         setEmailError('Email is required');
+    //         isValid = false;
+    //     } else if (!/\S+@\S+\.\S+/.test(email)) {
+    //         setEmailError('Email is invalid');
+    //         isValid = false;
+    //     } else {
+    //         setEmailError('');
+    //     }
+    //     return isValid;
+    // };
 
-    const handleSubmit = (e) => {
-        fetch("/", {
-            method: "POST",
-            headers: {"Content-Type": ""},
-        })
-            .then(function (response) {
-                return response.text().then(function (text) {
-                    console.log(text);
-                });
-            })
-            .catch((error) => alert(error));
-
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const resultError = validateForm({email, password});
+        setSubmitting(true);
 
-        if (resultError !== null) {
-            setError(resultError);
-            return;
-        }
-        if (validateForm()) {
-            console.log(`Submitting email: ${email}`);
-            // Send email data to server or perform other actions
-        }
+        try {
+            const response = await fetch('https://umbrella-back.webtoolteam.com/api/external/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    phone: phoneNumber
+                })
+            });
+            if (!response.ok) {
+                throw new Error('An error occurred while submitting the form.');
+            }
 
-        setPhone(0)
-        setEmail('');
-        setPassword('');
-        setError(null);
-        setSuccess('Application was submitted!');
+            setSuccess(true);
+            setPhoneNumber('');
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    console.log("🚀 ~ file: Form.js ~ line 63 ~ handleSubmit: ", handleSubmit);
 
     function handleEmailClick() {
         setSliderMoved(true);
@@ -70,6 +69,11 @@ export default function Form() {
         setSliderMoved(false);
         setFormSectionMoved(false);
     }
+
+    const handlePhoneChange = (event) => {
+        setPhoneNumber(event.target.value);
+    };
+
 
     const handlePhoneNumberChange = (event) => {
         const value = event.target.value;
@@ -93,6 +97,11 @@ export default function Form() {
         }
     }
 
+    if (success) {
+        window.location.href = 'https://www.google.com/'; // Redirect to Boom Casino
+        return null;
+    }
+
     return (
         <div className="container">
             <div className={`slider ${sliderMoved ? `moveslider` : ``}`}></div>
@@ -101,15 +110,22 @@ export default function Form() {
                 <button className="signup" onClick={handleEmailClick}>По E-Mail</button>
             </div>
             <div className={`form-section ${formSectionMoved ? `form-section-move` : ``}`}>
-                <div className="phone-box">
-                    <input type="text"
-                           value={phoneNumber}
-                           onChange={handlePhoneNumberChange}
-                           className="name ele"
-                           placeholder="Enter your phone"
-                           required
-                    />
-                    <button className="clkbtn" disabled={!isValidPhoneNumber}>Зарегистрироваться</button>
+                <div className="phone-box"> {success ? (<div>Thank you for registering your phone number!</div>
+                    ) :
+                    <form onSubmit={handleSubmit}>
+                        <input type="text"
+                               value={phoneNumber}
+                               onChange={handlePhoneChange}
+                               className="name ele"
+                               placeholder="Enter your phone"
+                               required
+                        />
+                        <button className="clkbtn" disabled={!handlePhoneNumberChange}
+                                onClick={handleSubmit}> {submitting ? 'Submitting...' : 'Submit'}
+                        </button>
+                        {error && <div>{error}</div>}
+                    </form>
+                }
                 </div>
                 <div className="signup-box">
                     <input type="email"
@@ -120,9 +136,9 @@ export default function Form() {
                     <input type="password"
                            className="password ele"
                            placeholder="password"
-                           />
-                    <button className="clkbtn"  disabled={!isValid}>Зарегистрироваться</button>
-                 {/*//   {!isValid && <p>Please enter a valid email address.</p>}*/}
+                    />
+                    <button className="clkbtn" disabled={!isValid} onSubmit={handleSubmit}>Зарегистрироваться</button>
+                    {/*//   {!isValid && <p>Please enter a valid email address.</p>}*/}
 
                 </div>
             </div>
