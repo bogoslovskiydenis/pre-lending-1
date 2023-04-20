@@ -33,7 +33,13 @@ export default function Form() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitting(true);
+        // const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
+        // const inputphoneNumber = e.target.value;
+        // if (!phoneRegex.test(inputphoneNumber)) {
+        //     setError('Please enter a valid phone number.');
+        //     return;
+        // }
+
 
         try {
             const response = await fetch('https://umbrella-back.webtoolteam.com/api/external/auth/register', {
@@ -71,18 +77,20 @@ export default function Form() {
     }
 
     const handlePhoneChange = (event) => {
-        setPhoneNumber(event.target.value);
+        const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
+
+        // setPhoneNumber(event.target.value);
+        const inputphoneNumber = event.target.value;
+
+        setPhoneNumber(inputphoneNumber)
+        if (!phoneRegex.test(inputphoneNumber)) {
+            setError('Please enter a valid phone number.');
+            setIsValid(false);
+        }else {
+            setIsValid(true);
+        }
     };
 
-
-    const handlePhoneNumberChange = (event) => {
-        const value = event.target.value;
-        // remove non-digit characters from input
-        const cleanedValue = value.replace(/\D/g, '');
-        setPhoneNumber(cleanedValue);
-        // check if phone number is valid
-        setIsValidPhoneNumber(/^\d{10}$/.test(cleanedValue));
-    };
 
     function handleInputChange(event) {
         const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
@@ -97,10 +105,10 @@ export default function Form() {
         }
     }
 
-    if (success) {
-        window.location.href = 'https://www.google.com/'; // Redirect to Boom Casino
-        return null;
-    }
+    // if (success) {
+    //     window.location.href = 'https://www.google.com/'; // Redirect to Boom Casino
+    //     return null;
+    // }
 
     return (
         <div className="container">
@@ -110,9 +118,8 @@ export default function Form() {
                 <button className="signup" onClick={handleEmailClick}>По E-Mail</button>
             </div>
             <div className={`form-section ${formSectionMoved ? `form-section-move` : ``}`}>
-                <div className="phone-box"> {success ? (<div>Thank you for registering your phone number!</div>
-                    ) :
-                    <form onSubmit={handleSubmit}>
+                <div className="phone-box"> {success ? (<div >Thank you for registering your phone number!</div>
+                    ) : <form onSubmit={handleSubmit}>
                         <input type="text"
                                value={phoneNumber}
                                onChange={handlePhoneChange}
@@ -120,7 +127,7 @@ export default function Form() {
                                placeholder="Enter your phone"
                                required
                         />
-                        <button className="clkbtn" disabled={!handlePhoneNumberChange}
+                        <button className="phone-clkbtn" disabled={!isValid}
                                 onClick={handleSubmit}> {submitting ? 'Submitting...' : 'Submit'}
                         </button>
                         {error && <div>{error}</div>}
@@ -133,10 +140,10 @@ export default function Form() {
                            className="email ele"
                            placeholder="youremail@email.com"
                            onChange={handleInputChange}/>
-                    <input type="password"
-                           className="password ele"
-                           placeholder="password"
-                    />
+                    {/*<input type="password"*/}
+                    {/*       className="password ele"*/}
+                    {/*       placeholder="password"*/}
+                    {/*/>*/}
                     <button className="clkbtn" disabled={!isValid} onSubmit={handleSubmit}>Зарегистрироваться</button>
                     {/*//   {!isValid && <p>Please enter a valid email address.</p>}*/}
 
