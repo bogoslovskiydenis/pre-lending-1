@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-
+import useDevice from "../hooks/useDevice"
+import axios from "axios";
 
 export default function Form() {
 
@@ -15,6 +16,7 @@ export default function Form() {
     const [errorMessage, setErrorMessage] = useState('');
     const [success, setSuccess] = useState(null);
     const [error, setError] = useState(null);
+
 
 
     // const validateForm = () => {
@@ -33,34 +35,36 @@ export default function Form() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
-        // const inputphoneNumber = e.target.value;
-        // if (!phoneRegex.test(inputphoneNumber)) {
-        //     setError('Please enter a valid phone number.');
-        //     return;
-        // }
-
+        setSubmitting(true);
 
         try {
             const response = await fetch('https://umbrella-back.webtoolteam.com/api/external/auth/register', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    "Accept": "application/json"
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    phone: phoneNumber,
-                    "api_key" : "17932070d329078091b886306a3c08f29995dc95"
+                    phone: phoneNumber
                 })
             });
-            if (!response.ok) {
-                throw new Error('An error occurred while submitting the form.');
+            if (response.status === 200) {
+                setSuccess(true);
+                setPhoneNumber('');
+            } else {
+                throw new Error(`Unexpected response: ${response.status}`);
             }
-//422
-            setSuccess(true);
-            setPhoneNumber('');
         } catch (error) {
-            setError(error.message);
+            if (error.response) {
+                if (error.response.status === 403) {
+                    setError('Unauthorized request. Please try again with valid credentials.');
+                } else {
+                    setError(`Request failed with status code ${error.response.status}`);
+                }
+            } else if (error.message) {
+                setError(error.message);
+            } else {
+                setError('An unknown error occurred');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -79,20 +83,21 @@ export default function Form() {
     }
 
     const handlePhoneChange = (event) => {
-        const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
-
-        // setPhoneNumber(event.target.value);
-        const inputphoneNumber = event.target.value;
-
-        setPhoneNumber(inputphoneNumber)
-        if (!phoneRegex.test(inputphoneNumber)) {
-            setError('Please enter a valid phone number.');
-            setIsValid(false);
-        }else {
-            setIsValid(true);
-        }
+        setPhoneNumber(event.target.value);
     };
 
+    // if (success) {
+    //     window.location.href = 'https://www.google.com/'; // Redirect to Boom Casino
+    //     return null;
+    // }
+    function handlePhoneNumberChange  (event)  {
+        const value = event.target.value;
+        // remove non-digit characters from input
+        const cleanedValue = value.replace(/\D/g, '');
+        setPhoneNumber(cleanedValue);
+        // check if phone number is valid
+        setIsValidPhoneNumber(/^\d{10}$/.test(cleanedValue));
+    };
 
     function handleInputChange(event) {
         const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
@@ -107,11 +112,6 @@ export default function Form() {
         }
     }
 
-    if (success) {
-        window.location.href = 'https://umbrella.webtoolteam.com?oauth=4633af2157baf9dabfe6c59a131df7a7'; // Redirect to Boom Casino
-        return null;
-    }
-
     return (
         <div className="container">
             <div className={`slider ${sliderMoved ? `moveslider` : ``}`}></div>
@@ -120,8 +120,8 @@ export default function Form() {
                 <button className="signup" onClick={handleEmailClick}>По E-Mail</button>
             </div>
             <div className={`form-section ${formSectionMoved ? `form-section-move` : ``}`}>
-                <div className="phone-box"> {success ? (<div >Thank you for registering your phone number!</div>
-                    ) : <form onSubmit={handleSubmit}>
+                <div className="phone-box">
+                    <form onSubmit={handleSubmit}>
                         <input type="text"
                                value={phoneNumber}
                                onChange={handlePhoneChange}
@@ -129,12 +129,10 @@ export default function Form() {
                                placeholder="Enter your phone"
                                required
                         />
-                        <button className="phone-clkbtn" disabled={!isValid}
-                                onClick={handleSubmit}> {submitting ? 'Submitting...' : 'Submit'}
-                        </button>
-                        {error && <div>{error}</div>}
+                        <button className="clkbtn"  disabled={!handlePhoneNumberChange} onClick={handleSubmit}>Зарегистрироваться</button>
+
                     </form>
-                }
+
                 </div>
                 <div className="signup-box">
                     <input type="email"
@@ -142,10 +140,10 @@ export default function Form() {
                            className="email ele"
                            placeholder="youremail@email.com"
                            onChange={handleInputChange}/>
-                    {/*<input type="password"*/}
-                    {/*       className="password ele"*/}
-                    {/*       placeholder="password"*/}
-                    {/*/>*/}
+                    <input type="password"
+                           className="password ele"
+                           placeholder="password"
+                    />
                     <button className="clkbtn" disabled={!isValid} onSubmit={handleSubmit}>Зарегистрироваться</button>
                     {/*//   {!isValid && <p>Please enter a valid email address.</p>}*/}
 
